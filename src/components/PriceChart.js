@@ -187,44 +187,140 @@ const PriceChart = ({ data, fromCrypto, toCrypto, cryptoList }) => {
           <LineChart
             data={data}
             margin={{
-              top: 5,
-              right: isMobile ? 10 : 30,
-              left: isMobile ? -20 : 10,
-              bottom: 5,
+              top: 20,
+              right: isMobile ? 30 : 80,
+              left: isMobile ? 10 : 80,
+              bottom: 20
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey="date" 
-              tick={{ fontSize: isMobile ? 10 : 12 }}
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke="rgba(255, 255, 255, 0.05)"
+              vertical={false}
+            />
+            <XAxis
+              dataKey="date"
+              interval="preserveStartEnd"
+              tick={{ fill: 'rgba(255, 255, 255, 0.6)', fontSize: isMobile ? 10 : 11 }}
+              stroke="rgba(255, 255, 255, 0.1)"
               angle={isMobile ? -45 : 0}
               textAnchor={isMobile ? "end" : "middle"}
               height={isMobile ? 60 : 30}
+              tickMargin={10}
             />
-            <YAxis 
-              domain={[minRatio - padding, maxRatio + padding]}
+            <YAxis
+              yAxisId="price"
               tickFormatter={formatCoins}
-              tick={{ fontSize: isMobile ? 10 : 12 }}
-              width={isMobile ? 60 : 80}
+              domain={['auto', 'auto']}
+              width={75}
+              tick={{ 
+                fill: 'rgba(255, 255, 255, 0.6)', 
+                fontSize: isMobile ? 10 : 11,
+                dx: -5
+              }}
+              stroke="rgba(255, 255, 255, 0.1)"
+              tickMargin={5}
+              label={{ 
+                value: 'Price (USD)',
+                angle: -90,
+                position: 'insideLeft',
+                fill: 'rgba(255, 255, 255, 0.6)',
+                offset: -45,
+                style: {
+                  fontSize: isMobile ? 10 : 12,
+                  textAnchor: 'middle'
+                }
+              }}
+            />
+            <YAxis
+              yAxisId="ratio"
+              orientation="right"
+              tickFormatter={formatCoins}
+              domain={['auto', 'auto']}
+              width={75}
+              tick={{ 
+                fill: 'rgba(255, 255, 255, 0.6)', 
+                fontSize: isMobile ? 10 : 11,
+                dx: 5
+              }}
+              stroke="rgba(255, 255, 255, 0.1)"
+              tickMargin={5}
+              label={{ 
+                value: 'Exchange Rate',
+                angle: 90,
+                position: 'insideRight',
+                fill: 'rgba(255, 255, 255, 0.6)',
+                offset: 45,
+                style: {
+                  fontSize: isMobile ? 10 : 12,
+                  textAnchor: 'middle'
+                }
+              }}
             />
             <Tooltip 
               content={<CustomTooltip />}
+              cursor={{ 
+                stroke: 'rgba(255, 255, 255, 0.2)',
+                strokeWidth: 1,
+                strokeDasharray: '5 5',
+              }}
               wrapperStyle={{ zIndex: 1000 }}
             />
             <Legend 
-              wrapperStyle={{ fontSize: isMobile ? 10 : 12 }}
+              verticalAlign="top"
+              height={36}
+              wrapperStyle={{ 
+                paddingTop: '10px',
+                paddingBottom: '5px',
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontSize: isMobile ? 10 : 12
+              }}
+              iconSize={12}
+              iconType="plainline"
             />
             <Line
+              yAxisId="price"
               type="monotone"
-              dataKey="ratio"
-              stroke={theme.palette.primary.main}
+              dataKey="fromPrice"
+              stroke="#00bcd4"
+              name={`${getSymbol(fromCrypto)} Price`}
               strokeWidth={2}
               dot={false}
-              name={`Exchange Rate (${getSymbol(fromCrypto)}/${getSymbol(toCrypto)})`}
               activeDot={{ 
                 r: 6, 
-                fill: theme.palette.primary.main, 
-                stroke: theme.palette.background.paper,
+                fill: '#00bcd4', 
+                stroke: '#fff',
+                strokeWidth: 2,
+              }}
+            />
+            <Line
+              yAxisId="price"
+              type="monotone"
+              dataKey="toPrice"
+              stroke="#ff4081"
+              name={`${getSymbol(toCrypto)} Price`}
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ 
+                r: 6, 
+                fill: '#ff4081', 
+                stroke: '#fff',
+                strokeWidth: 2,
+              }}
+            />
+            <Line
+              yAxisId="ratio"
+              type="monotone"
+              dataKey="ratio"
+              stroke="#00e676"
+              name="Exchange Rate"
+              strokeWidth={2}
+              dot={false}
+              strokeDasharray="3 3"
+              activeDot={{ 
+                r: 6, 
+                fill: '#00e676', 
+                stroke: '#fff',
                 strokeWidth: 2,
               }}
             />

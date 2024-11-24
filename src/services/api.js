@@ -5,7 +5,11 @@ const COINGECKO_API = 'https://api.coingecko.com/api/v3';
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: COINGECKO_API,
-  timeout: 10000,
+  timeout: 15000, // Increased timeout
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json'
+  }
 });
 
 // Add response interceptor for error handling

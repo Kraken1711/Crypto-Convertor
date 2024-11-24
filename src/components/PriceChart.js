@@ -9,9 +9,12 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { Paper, Typography, Box, CircularProgress } from '@mui/material';
+import { Paper, Typography, Box, CircularProgress, useTheme, useMediaQuery } from '@mui/material';
 
 const PriceChart = ({ data, fromCrypto, toCrypto, cryptoList }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const formatCoins = (value) => {
     return value.toFixed(8);
   };
@@ -126,201 +129,115 @@ const PriceChart = ({ data, fromCrypto, toCrypto, cryptoList }) => {
     return null;
   };
 
-  if (!data || data.length === 0) {
-    return (
-      <Paper elevation={3} sx={{ p: 3, textAlign: 'center' }}>
-        <CircularProgress />
-      </Paper>
-    );
-  }
-
-  // Calculate min and max values for better chart scaling
-  const fromPrices = data.map(d => d.fromPrice);
-  const toPrices = data.map(d => d.toPrice);
-  const minPrice = Math.min(...fromPrices, ...toPrices);
-  const maxPrice = Math.max(...fromPrices, ...toPrices);
-  const padding = (maxPrice - minPrice) * 0.1;
-
   return (
     <Paper 
       elevation={3} 
       sx={{ 
-        p: 3,
-        transition: 'transform 0.2s ease-in-out',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-        },
+        p: { xs: 2, sm: 3 }, 
+        mt: 3,
+        width: '100%',
+        maxWidth: '100%',
+        overflow: 'hidden'
       }}
     >
-      <Box sx={{ mb: 2 }}>
-        <Typography 
-          variant="h6" 
-          gutterBottom
-          sx={{
-            background: 'linear-gradient(45deg, #00bcd4 30%, #ff4081 90%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontWeight: 600,
-          }}
-        >
-          30-Day Price Comparison
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Compare {getSymbol(fromCrypto)} and {getSymbol(toCrypto)} prices and exchange rate
-        </Typography>
-      </Box>
-      <Box sx={{ width: '100%', height: 500, mt: 4 }}>
-        <ResponsiveContainer>
-          <LineChart 
-            data={data}
-            margin={{
-              top: 20,
-              right: 80,
-              left: 80,
-              bottom: 20
+      {!data ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <>
+          <Typography variant="h6" gutterBottom align="center">
+            30 Day Price History
+          </Typography>
+          
+          <Box 
+            sx={{ 
+              width: '100%', 
+              height: isMobile ? 300 : 400,
+              mt: 2,
+              '.recharts-wrapper': {
+                maxWidth: '100%'
+              }
             }}
           >
-            <CartesianGrid 
-              strokeDasharray="3 3" 
-              stroke="rgba(255, 255, 255, 0.05)"
-              vertical={false}
-            />
-            <XAxis
-              dataKey="formattedDate"
-              interval="preserveStartEnd"
-              tick={{ fill: 'rgba(255, 255, 255, 0.6)', fontSize: 11 }}
-              stroke="rgba(255, 255, 255, 0.1)"
-              angle={-45}
-              textAnchor="end"
-              height={60}
-              tickMargin={10}
-            />
-            <YAxis
-              yAxisId="price"
-              tickFormatter={formatCoins}
-              domain={[minPrice - padding, maxPrice + padding]}
-              width={75}
-              tick={{ 
-                fill: 'rgba(255, 255, 255, 0.6)', 
-                fontSize: 11,
-                dx: -5
-              }}
-              stroke="rgba(255, 255, 255, 0.1)"
-              tickMargin={5}
-              label={{ 
-                value: 'Price (USD)',
-                angle: -90,
-                position: 'insideLeft',
-                fill: 'rgba(255, 255, 255, 0.6)',
-                offset: -45,
-                style: {
-                  fontSize: 12,
-                  textAnchor: 'middle'
-                }
-              }}
-            />
-            <YAxis
-              yAxisId="ratio"
-              orientation="right"
-              tickFormatter={formatCoins}
-              domain={['auto', 'auto']}
-              width={75}
-              tick={{ 
-                fill: 'rgba(255, 255, 255, 0.6)', 
-                fontSize: 11,
-                dx: 5
-              }}
-              stroke="rgba(255, 255, 255, 0.1)"
-              tickMargin={5}
-              label={{ 
-                value: 'Exchange Rate',
-                angle: 90,
-                position: 'insideRight',
-                fill: 'rgba(255, 255, 255, 0.6)',
-                offset: 45,
-                style: {
-                  fontSize: 12,
-                  textAnchor: 'middle'
-                }
-              }}
-            />
-            <Tooltip 
-              content={<CustomTooltip />}
-              cursor={{ 
-                stroke: 'rgba(255, 255, 255, 0.2)',
-                strokeWidth: 1,
-                strokeDasharray: '5 5',
-              }}
-              offset={20}
-            />
-            <Legend 
-              verticalAlign="top"
-              height={36}
-              wrapperStyle={{ 
-                paddingTop: '10px',
-                paddingBottom: '5px',
-                color: 'rgba(255, 255, 255, 0.7)'
-              }}
-              formatter={(value) => {
-                return <span style={{ 
-                  color: 'rgba(255, 255, 255, 0.8)', 
-                  fontSize: '12px', 
-                  padding: '4px 8px',
-                  marginRight: '8px'
-                }}>{value}</span>;
-              }}
-              iconSize={12}
-              iconType="plainline"
-            />
-            <Line
-              yAxisId="price"
-              type="monotone"
-              dataKey="fromPrice"
-              stroke="#00bcd4"
-              name={`${getSymbol(fromCrypto)} Price`}
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ 
-                r: 6, 
-                fill: '#00bcd4', 
-                stroke: '#fff',
-                strokeWidth: 2,
-              }}
-            />
-            <Line
-              yAxisId="price"
-              type="monotone"
-              dataKey="toPrice"
-              stroke="#ff4081"
-              name={`${getSymbol(toCrypto)} Price`}
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ 
-                r: 6, 
-                fill: '#ff4081', 
-                stroke: '#fff',
-                strokeWidth: 2,
-              }}
-            />
-            <Line
-              yAxisId="ratio"
-              type="monotone"
-              dataKey="ratio"
-              stroke="#00e676"
-              name="Exchange Rate"
-              strokeWidth={2}
-              dot={false}
-              strokeDasharray="3 3"
-              activeDot={{ 
-                r: 6, 
-                fill: '#00e676', 
-                stroke: '#fff',
-                strokeWidth: 2,
-              }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </Box>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={data}
+                margin={{
+                  top: 5,
+                  right: isMobile ? 10 : 30,
+                  left: isMobile ? -20 : 10,
+                  bottom: 5,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fontSize: isMobile ? 10 : 12 }}
+                  angle={isMobile ? -45 : 0}
+                  textAnchor={isMobile ? "end" : "middle"}
+                  height={isMobile ? 60 : 30}
+                />
+                <YAxis 
+                  tickFormatter={formatCoins}
+                  tick={{ fontSize: isMobile ? 10 : 12 }}
+                  width={isMobile ? 60 : 80}
+                />
+                <Tooltip 
+                  formatter={(value) => [formatCoins(value), 'Price']}
+                  contentStyle={{ fontSize: isMobile ? 12 : 14 }}
+                />
+                <Legend 
+                  wrapperStyle={{ fontSize: isMobile ? 10 : 12 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="price"
+                  stroke="#00BCD4"
+                  strokeWidth={2}
+                  dot={false}
+                  name={`Exchange Rate (${getSymbol(fromCrypto)}/${getSymbol(toCrypto)})`}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </Box>
+
+          {data.length > 0 && (
+            <Box sx={{ mt: 3, px: { xs: 1, sm: 2 } }}>
+              <Typography variant="h6" gutterBottom align="center">
+                Performance Analysis
+              </Typography>
+              <Box sx={{ 
+                mt: 1, 
+                pt: 1, 
+                borderTop: '1px solid rgba(255, 255, 255, 0.12)'
+              }}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    color: '#4caf50',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  Profit/Loss:
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                  Rate: 
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                  USD: 
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                  {getSymbol(fromCrypto)}: 
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                  {getSymbol(toCrypto)}: 
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </>
+      )}
     </Paper>
   );
 };

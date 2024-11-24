@@ -66,29 +66,32 @@ export const fetchCryptoHistory = async (fromCryptoId, toCryptoId) => {
       })
     ]);
 
+    // Process and combine the data
     const fromPrices = fromResponse.data.prices;
     const toPrices = toResponse.data.prices;
 
-    // Process the data to get exchange rates
-    return fromPrices.map((fromPrice, index) => {
-      const date = new Date(fromPrice[0]);
-      const formattedDate = date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric'
-      });
-      
+    // Ensure we have data points for both currencies
+    const combinedData = fromPrices.map((fromPrice, index) => {
+      const toPrice = toPrices[index];
+      if (!toPrice) return null;
+
       const fromValue = fromPrice[1];
-      const toValue = toPrices[index][1];
-      const price = toValue / fromValue;
+      const toValue = toPrice[1];
+      const ratio = toValue / fromValue;
 
       return {
-        date: formattedDate,
-        price,
-        timestamp: fromPrice[0],
         fromPrice: fromValue,
-        toPrice: toValue
+        toPrice: toValue,
+        ratio: ratio,
+        date: new Date(fromPrice[0]).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric'
+        }),
+        timestamp: fromPrice[0]
       };
-    });
+    }).filter(dataPoint => dataPoint !== null);
+
+    return combinedData;
   } catch (error) {
     console.error('Error fetching crypto history:', error);
     throw error;

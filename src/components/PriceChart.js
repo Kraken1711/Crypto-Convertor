@@ -25,32 +25,111 @@ const PriceChart = ({ data, fromCrypto, toCrypto, cryptoList }) => {
     return crypto ? crypto.symbol.toUpperCase() : '';
   };
 
+  const calculateProfit = (currentValue, startValue, fromPrice, toPrice, fromSymbol, toSymbol) => {
+    // Calculate basic exchange rate change
+    const ratioChange = currentValue - startValue;
+    const ratioPercentage = ((currentValue - startValue) / startValue) * 100;
+
+    // Calculate value in USD
+    const startValueUSD = startValue * toPrice;
+    const currentValueUSD = currentValue * toPrice;
+    const profitUSD = currentValueUSD - startValueUSD;
+    
+    // Calculate profit in terms of both cryptocurrencies
+    const profitInFromCrypto = profitUSD / fromPrice;
+    const profitInToCrypto = profitUSD / toPrice;
+
+    return {
+      ratio: {
+        profit: ratioChange.toFixed(8),
+        percentage: ratioPercentage.toFixed(2)
+      },
+      usd: {
+        profit: profitUSD.toFixed(2),
+        percentage: ((profitUSD / startValueUSD) * 100).toFixed(2)
+      },
+      crypto: {
+        from: {
+          amount: profitInFromCrypto.toFixed(8),
+          symbol: fromSymbol
+        },
+        to: {
+          amount: profitInToCrypto.toFixed(8),
+          symbol: toSymbol
+        }
+      }
+    };
+  };
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || !payload.length) return null;
+
+    const fromSymbol = getSymbol(fromCrypto);
+    const toSymbol = getSymbol(toCrypto);
+    
+    // Get values from payload
+    const fromPrice = payload[0].payload.fromPrice;
+    const toPrice = payload[0].payload.toPrice;
+    const ratio = payload[0].payload.ratio;
+    
+    // Calculate profit/loss from start of period
+    const startRatio = data[0].ratio;
+    const profitInfo = calculateProfit(ratio, startRatio, fromPrice, toPrice, fromSymbol, toSymbol);
+    const isProfitable = Number(profitInfo.ratio.profit) >= 0;
 
     return (
       <Box
         sx={{
           bgcolor: 'background.paper',
-          p: 1.5,
+          p: 2,
           border: '1px solid',
           borderColor: 'divider',
           borderRadius: 1,
           boxShadow: 3,
+          minWidth: isMobile ? 200 : 250,
+          fontSize: isMobile ? 12 : 14
         }}
       >
         <Typography variant="subtitle2" gutterBottom>
           {label}
         </Typography>
-        {payload.map((entry, index) => (
-          <Typography
-            key={index}
-            variant="body2"
-            sx={{ color: entry.color }}
+        <Typography variant="body2" color="primary.main" gutterBottom>
+          1 {fromSymbol} = {formatCoins(fromPrice)} USD
+        </Typography>
+        <Typography variant="body2" color="secondary.main" gutterBottom>
+          1 {toSymbol} = {formatCoins(toPrice)} USD
+        </Typography>
+        <Typography variant="body2" color="success.main" gutterBottom>
+          Exchange Rate: 1 {fromSymbol} = {formatCoins(ratio)} {toSymbol}
+        </Typography>
+        
+        <Box sx={{ 
+          mt: 1.5, 
+          pt: 1.5, 
+          borderTop: '1px solid',
+          borderColor: 'divider'
+        }}>
+          <Typography 
+            variant="body2" 
+            color={isProfitable ? 'success.main' : 'error.main'}
+            fontWeight="bold"
+            gutterBottom
           >
-            {entry.name}: {formatCoins(entry.value)}
+            Profit/Loss:
           </Typography>
-        ))}
+          <Typography variant="body2" color="text.secondary">
+            Rate: {profitInfo.ratio.profit} {toSymbol} ({profitInfo.ratio.percentage}%)
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            USD: ${profitInfo.usd.profit} ({profitInfo.usd.percentage}%)
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {fromSymbol}: {profitInfo.crypto.from.amount}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {toSymbol}: {profitInfo.crypto.to.amount}
+          </Typography>
+        </Box>
       </Box>
     );
   };
@@ -74,10 +153,10 @@ const PriceChart = ({ data, fromCrypto, toCrypto, cryptoList }) => {
   }
 
   // Calculate min and max values for better chart scaling
-  const prices = data.map(d => d.price);
-  const minPrice = Math.min(...prices);
-  const maxPrice = Math.max(...prices);
-  const padding = (maxPrice - minPrice) * 0.1;
+  const ratios = data.map(d => d.ratio);
+  const minRatio = Math.min(...ratios);
+  const maxRatio = Math.max(...ratios);
+  const padding = (maxRatio - minRatio) * 0.1;
 
   return (
     <Paper 
@@ -123,22 +202,21 @@ const PriceChart = ({ data, fromCrypto, toCrypto, cryptoList }) => {
               height={isMobile ? 60 : 30}
             />
             <YAxis 
-              domain={[minPrice - padding, maxPrice + padding]}
+              domain={[minRatio - padding, maxRatio + padding]}
               tickFormatter={formatCoins}
               tick={{ fontSize: isMobile ? 10 : 12 }}
               width={isMobile ? 60 : 80}
             />
             <Tooltip 
               content={<CustomTooltip />}
-              formatter={(value) => [formatCoins(value), 'Price']}
-              contentStyle={{ fontSize: isMobile ? 12 : 14 }}
+              wrapperStyle={{ zIndex: 1000 }}
             />
             <Legend 
               wrapperStyle={{ fontSize: isMobile ? 10 : 12 }}
             />
             <Line
               type="monotone"
-              dataKey="price"
+              dataKey="ratio"
               stroke={theme.palette.primary.main}
               strokeWidth={2}
               dot={false}
@@ -168,16 +246,16 @@ const PriceChart = ({ data, fromCrypto, toCrypto, cryptoList }) => {
             {data.length > 1 && (
               <>
                 <Typography variant="body2" color="text.secondary">
-                  Starting Rate: {formatCoins(data[0].price)} {getSymbol(toCrypto)}/{getSymbol(fromCrypto)}
+                  Starting Rate: {formatCoins(data[0].ratio)} {getSymbol(toCrypto)}/{getSymbol(fromCrypto)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Current Rate: {formatCoins(data[data.length - 1].price)} {getSymbol(toCrypto)}/{getSymbol(fromCrypto)}
+                  Current Rate: {formatCoins(data[data.length - 1].ratio)} {getSymbol(toCrypto)}/{getSymbol(fromCrypto)}
                 </Typography>
                 <Typography 
                   variant="body2" 
-                  color={data[data.length - 1].price > data[0].price ? 'success.main' : 'error.main'}
+                  color={data[data.length - 1].ratio > data[0].ratio ? 'success.main' : 'error.main'}
                 >
-                  Change: {((data[data.length - 1].price - data[0].price) / data[0].price * 100).toFixed(2)}%
+                  Change: {((data[data.length - 1].ratio - data[0].ratio) / data[0].ratio * 100).toFixed(2)}%
                 </Typography>
               </>
             )}

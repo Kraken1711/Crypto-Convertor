@@ -36,7 +36,3 @@ npm install
 ```bash
 npm start
 ```
-
-## Live Demo
-
-[Coming soon - Will be deployed on Vercel]

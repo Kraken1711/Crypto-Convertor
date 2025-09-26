@@ -23,7 +23,7 @@ A modern React-based cryptocurrency converter with real-time price tracking and 
 
 1. Clone the repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/crypto-converter.git
+git clone https://github.com/Kraken1711/crypto-converter.git
 ```
 
 2. Install dependencies
